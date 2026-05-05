@@ -60,7 +60,6 @@
 
         /* Layout shell */
         .emm-app { display: grid; grid-template-columns: 252px 1fr; min-height: 100vh; }
-        @media (max-width: 991px) { .emm-app { grid-template-columns: 1fr; } .emm-side { display: none; } }
 
         /* Sidebar */
         .emm-side {
@@ -68,6 +67,36 @@
             border-right: 1px solid var(--emm-border-soft);
             padding: 14px 0;
             position: sticky; top: 0; height: 100vh; overflow-y: auto;
+            z-index: 30;
+        }
+        .emm-backdrop { display: none; }
+        .emm-mobile-toggle { display: none; }
+
+        /* Tablet (≤ 991px): collapsible sidebar slides in from left */
+        @media (max-width: 991px) {
+            .emm-app { grid-template-columns: 1fr; }
+            .emm-side {
+                position: fixed; top: 0; left: 0;
+                width: 280px; max-width: 84vw;
+                transform: translateX(-100%);
+                transition: transform .25s ease;
+                box-shadow: 0 4px 20px rgba(15,23,42,.18);
+            }
+            body.sidebar-open .emm-side { transform: translateX(0); }
+            .emm-backdrop {
+                display: block; position: fixed; inset: 0;
+                background: rgba(15,23,42,.4); z-index: 25;
+                opacity: 0; pointer-events: none;
+                transition: opacity .2s ease;
+            }
+            body.sidebar-open .emm-backdrop { opacity: 1; pointer-events: auto; }
+            body.sidebar-open { overflow: hidden; }
+            .emm-mobile-toggle {
+                display: grid; place-items: center;
+                width: 38px; height: 38px; border-radius: 10px;
+                border: 1px solid var(--emm-border); background: var(--emm-surface);
+                color: var(--emm-text-muted); cursor: pointer; flex-shrink: 0;
+            }
         }
         .emm-brand { display: flex; align-items: center; gap: 10px; padding: 8px 18px 18px; }
         .emm-brand .logo {
@@ -108,21 +137,14 @@
         .emm-main { display: flex; flex-direction: column; min-width: 0; }
         .emm-top {
             display: flex; align-items: center; justify-content: space-between;
+            gap: 12px;
             padding: 14px 28px; background: var(--emm-bg);
             position: sticky; top: 0; z-index: 10;
         }
+        .emm-top .top-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
         .emm-top .crumbs { color: var(--emm-text-soft); font-size: 12.5px; margin-bottom: 2px; }
-        .emm-top h6 { margin: 0; font-size: 18px; font-weight: 600; color: var(--emm-text); }
-        .emm-top .search {
-            position: relative; min-width: 280px;
-        }
-        .emm-top .search input {
-            width: 100%; height: 38px; padding: 0 12px 0 38px;
-            border: 1px solid var(--emm-border); background: var(--emm-surface);
-            border-radius: 10px; font-size: 13px;
-        }
-        .emm-top .search i { position: absolute; left: 12px; top: 11px; color: var(--emm-text-soft); }
-        .emm-top .actions { display: flex; align-items: center; gap: 10px; }
+        .emm-top h6 { margin: 0; font-size: 18px; font-weight: 600; color: var(--emm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .emm-top .actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         .emm-top .icon-btn {
             width: 38px; height: 38px; border-radius: 10px;
             border: 1px solid var(--emm-border); background: var(--emm-surface);
@@ -139,7 +161,7 @@
         .emm-top .user-pill .avatar {
             width: 28px; height: 28px; border-radius: 50%;
             background: linear-gradient(135deg, #5b6cff, #7c8cff);
-            color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 12px;
+            color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 12px; flex-shrink: 0;
         }
         .emm-top .user-pill .meta { line-height: 1.1; }
         .emm-top .user-pill .meta strong { font-size: 13px; color: var(--emm-text); display: block; font-weight: 600; }
@@ -147,6 +169,21 @@
 
         /* Content */
         .emm-content { padding: 8px 28px 36px; }
+
+        /* Tablet/Mobile */
+        @media (max-width: 991px) {
+            .emm-top { padding: 12px 16px; }
+            .emm-content { padding: 8px 16px 32px; }
+            .emm-top h6 { font-size: 16px; }
+            .emm-top .icon-btn[title="Home"] { display: none; }
+            .emm-top .user-pill .meta { display: none; }
+            .emm-top .user-pill { padding: 5px; }
+        }
+        @media (max-width: 575px) {
+            .emm-top { padding: 10px 12px; }
+            .emm-content { padding: 6px 12px 28px; }
+            .emm-top .icon-btn[title="Notifications"] { display: none; }
+        }
 
         /* Cards */
         .emm-card {
@@ -365,9 +402,14 @@
         }
 
         /* Section title */
-        .page-title { display: flex; align-items: center; justify-content: space-between; margin: 8px 0 18px; }
+        .page-title { display: flex; align-items: center; justify-content: space-between; margin: 8px 0 18px; gap: 12px; flex-wrap: wrap; }
         .page-title h3 { font-size: 22px; font-weight: 600; margin: 0; letter-spacing: -.01em; }
         .page-title .meta { font-size: 13px; color: var(--emm-text-soft); }
+        @media (max-width: 575px) {
+            .page-title h3 { font-size: 18px; }
+            .page-title .meta { font-size: 12px; }
+            .page-title { margin: 4px 0 14px; }
+        }
 
         /* Avatar circle */
         .avatar-sm { width: 24px; height: 24px; border-radius: 50%;
@@ -393,19 +435,92 @@
         .emm-tabs a:hover { color: var(--emm-text); }
         .emm-tabs a.active { color: var(--emm-primary); border-color: var(--emm-primary); }
 
+        /* Sticky form panels on desktop only */
+        @media (min-width: 992px) {
+            .sticky-on-desktop { position: sticky; top: 80px; }
+        }
+
         /* Misc */
         .text-muted { color: var(--emm-text-muted) !important; }
         .text-soft  { color: var(--emm-text-soft); }
         .divider    { height: 1px; background: var(--emm-border-soft); margin: 12px 0; }
         .money      { font-variant-numeric: tabular-nums; font-weight: 600; }
         hr { border-color: var(--emm-border-soft); }
+
+        /* ─── Responsive overrides ─── */
+        @media (max-width: 991px) {
+            /* Hero KPI: 2 columns on tablet */
+            .hero-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .hero-kpi { padding: 18px; }
+            .hero-kpi .num { font-size: 24px; }
+            .hero-kpi .spark { width: 120px; height: 36px; }
+
+            /* KPI grid */
+            .kpi-grid { gap: 10px; }
+            .kpi { padding: 14px; }
+            .kpi .value { font-size: 22px; }
+
+            /* Card paddings */
+            .emm-card-body { padding: 14px; }
+            .emm-card-header { padding: 12px 14px; }
+
+            /* Tables: smaller padding/font */
+            .emm-table thead th { padding: 9px 10px; font-size: 10.5px; }
+            .emm-table tbody td { padding: 10px 10px; font-size: 12.5px; }
+
+            /* Period pills wrap */
+            .period-pills { flex-wrap: wrap; }
+
+            /* Chart card body */
+            .chart-body { padding: 12px 14px 10px; }
+
+            /* Footer area on memo edit */
+            .row.g-3 > .col-lg-8, .row.g-3 > .col-lg-4 { width: 100%; }
+        }
+        @media (max-width: 575px) {
+            /* Mobile single column */
+            .hero-grid { grid-template-columns: 1fr; gap: 10px; }
+            .hero-kpi .spark { display: none; }
+
+            /* KPI 2 columns on phone */
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+
+            /* Buttons smaller */
+            .btn { padding: 7px 12px; font-size: 12.5px; }
+            .btn-sm { padding: 5px 10px; font-size: 11.5px; }
+            .btn-lg { padding: 10px 18px; font-size: 13.5px; }
+
+            /* Tables really compact */
+            .emm-table thead th { padding: 8px 8px; font-size: 10px; }
+            .emm-table tbody td { padding: 9px 8px; font-size: 12px; }
+
+            /* Page-title: stack actions */
+            .page-title > div:last-child { width: 100%; }
+            .page-title .d-flex { flex-wrap: wrap; }
+
+            /* Hide some columns on phone — using attribute selector for opt-in */
+            .emm-table th.hide-sm, .emm-table td.hide-sm { display: none; }
+
+            /* Form labels smaller */
+            .form-label { font-size: 11.5px; }
+
+            /* Activity feed */
+            .activity-item { padding: 10px 12px; }
+            .activity-item .ttext strong { font-size: 12.5px; }
+            .activity-item .ttext small { font-size: 11px; }
+
+            /* Status pills more compact */
+            .status { font-size: 10.5px; padding: 2px 8px; }
+            .role-tag { font-size: 9.5px; padding: 1px 6px; }
+        }
     </style>
 </head>
 <body>
+<div class="emm-backdrop" id="sidebarBackdrop"></div>
 <div class="emm-app">
     <?php $cur = $_SERVER['REQUEST_URI']; $isActive = fn($p) => str_contains($cur, $p) ? 'active' : ''; ?>
 
-    <aside class="emm-side">
+    <aside class="emm-side" id="sidebar">
         <div class="emm-brand">
             <div class="logo"><i class="bi bi-receipt-cutoff"></i></div>
             <div class="label"><strong>Memo System</strong><small>LOVE ISLAND · ANDAMAN</small></div>
@@ -462,9 +577,14 @@
 
     <div class="emm-main">
         <header class="emm-top">
-            <div>
-                <?php if (!empty($pageBreadcrumb)): ?><div class="crumbs"><?= e($pageBreadcrumb) ?></div><?php endif; ?>
-                <h6><?= isset($pageTitle) ? e($pageTitle) : '' ?></h6>
+            <div class="top-left">
+                <button class="emm-mobile-toggle" id="sidebarToggle" aria-label="Toggle menu">
+                    <i class="bi bi-list" style="font-size: 20px;"></i>
+                </button>
+                <div style="min-width: 0;">
+                    <?php if (!empty($pageBreadcrumb)): ?><div class="crumbs"><?= e($pageBreadcrumb) ?></div><?php endif; ?>
+                    <h6><?= isset($pageTitle) ? e($pageTitle) : '' ?></h6>
+                </div>
             </div>
             <div class="actions">
                 <button class="icon-btn" title="Notifications"><i class="bi bi-bell"></i></button>
@@ -500,5 +620,27 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// Mobile sidebar toggle
+(function () {
+    var toggle = document.getElementById('sidebarToggle');
+    var backdrop = document.getElementById('sidebarBackdrop');
+    var body = document.body;
+    function openSidebar()  { body.classList.add('sidebar-open'); }
+    function closeSidebar() { body.classList.remove('sidebar-open'); }
+    if (toggle)   toggle.addEventListener('click', function (e) { e.stopPropagation(); openSidebar(); });
+    if (backdrop) backdrop.addEventListener('click', closeSidebar);
+    // Close sidebar when clicking a nav-link (mobile)
+    document.querySelectorAll('.emm-side .nav-link').forEach(function (a) {
+        a.addEventListener('click', function () {
+            if (window.innerWidth <= 991) closeSidebar();
+        });
+    });
+    // Close on resize to desktop
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 991) closeSidebar();
+    });
+})();
+</script>
 </body>
 </html>

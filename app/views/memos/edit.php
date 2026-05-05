@@ -169,7 +169,7 @@
     </div>
 
     <div class="col-lg-4">
-        <div class="emm-card" style="position: sticky; top: 80px;">
+        <div class="emm-card sticky-on-desktop">
             <div class="emm-card-header"><strong>Add Expense Item</strong></div>
             <form method="post" action="<?= url('/memos/' . $memo['id'] . '/items') ?>" class="emm-card-body">
                 <?= csrf_field() ?>
