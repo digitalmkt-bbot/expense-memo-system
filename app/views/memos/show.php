@@ -5,12 +5,22 @@
         <h3><?= e($memo['memo_no'] ?? 'DRAFT') ?> <span class="status <?= e($memo['status']) ?>" style="margin-left: 10px;"><?= strtoupper(str_replace('_', ' ', $memo['status'])) ?></span></h3>
         <div class="meta"><?= e(memo_type_label($memo['memo_type'])) ?> · <?= format_date($memo['memo_date']) ?></div>
     </div>
-    <div class="d-flex gap-2">
+    <?php
+        $canDelete = $u['role'] === 'admin'
+            || ($memo['requester_id'] == $u['id'] && in_array($memo['status'], ['draft','cancelled','rejected'], true));
+    ?>
+    <div class="d-flex gap-2 flex-wrap">
         <a href="<?= url('/memos/' . $memo['id'] . '/pdf') ?>" target="_blank" class="btn btn-light">
             <i class="bi bi-printer"></i> Print / PDF
         </a>
         <?php if ($canEdit): ?>
             <a href="<?= url('/memos/' . $memo['id'] . '/edit') ?>" class="btn btn-warning"><i class="bi bi-pencil"></i> Edit</a>
+        <?php endif; ?>
+        <?php if ($canDelete): ?>
+            <form method="post" action="<?= url('/memos/' . $memo['id'] . '/delete') ?>" onsubmit="return confirm('ลบ Memo นี้? — ลบแล้วกู้คืนไม่ได้');" style="display:inline;">
+                <?= csrf_field() ?>
+                <button class="btn btn-outline-danger"><i class="bi bi-trash"></i> Delete</button>
+            </form>
         <?php endif; ?>
         <a href="<?= url('/memos') ?>" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
     </div>

@@ -41,6 +41,7 @@
     </div>
 </form>
 
+<?php $u = user(); $deletableStatuses = ['draft','cancelled','rejected']; ?>
 <div class="emm-card">
     <div class="table-responsive">
         <table class="emm-table">
@@ -85,8 +86,18 @@
                         <td class="text-end money"><?= format_money($m['net_amount']) ?></td>
                         <td><span class="status <?= e($m['status']) ?>"><?= strtoupper(str_replace('_', ' ', $m['status'])) ?></span></td>
                         <td><span class="status <?= e($m['payment_status']) ?>"><?= strtoupper(str_replace('_', ' ', $m['payment_status'])) ?></span></td>
-                        <td>
-                            <a href="<?= url('/memos/' . $m['id']) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                        <td style="white-space: nowrap;">
+                            <a href="<?= url('/memos/' . $m['id']) ?>" class="btn btn-sm btn-outline-secondary" title="View"><i class="bi bi-eye"></i></a>
+                            <?php
+                                $canDelete = $u['role'] === 'admin'
+                                    || ($m['requester_id'] == $u['id'] && in_array($m['status'], $deletableStatuses, true));
+                            ?>
+                            <?php if ($canDelete): ?>
+                                <form method="post" action="<?= url('/memos/' . $m['id'] . '/delete') ?>" style="display:inline;" onsubmit="return confirm('ลบ Memo นี้? — ไม่สามารถกู้คืนได้');">
+                                    <?= csrf_field() ?>
+                                    <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                </form>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

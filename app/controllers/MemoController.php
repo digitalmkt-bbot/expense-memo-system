@@ -351,6 +351,88 @@ class MemoController extends Controller
         $this->redirect('/memos/' . $id);
     }
 
+    /**
+     * Permanently delete a memo (and related items, attachments, files).
+     * Allowed when:
+     *   - Admin: anytime
+     *   - Requester: only when status = draft / cancelled / rejected (no approved memos can be deleted)
+     */
+    public function destroy(int $id): void
+    {
+        Auth::require();
+        if (!verify_csrf()) $this->abort(419);
+
+        $memo = Memo::find($id);
+        if (!$memo) $this->abort(404);
+
+        $u = Auth::user();
+        $deletableStatuses = ['draft', 'cancelled', 'rejected'];
+
+        if ($u['role'] !== 'admin') {
+            if ((int) $memo['requester_id'] !== (int) $u['id']) {
+                $this->abort(403, 'Only the requester or an admin can delete this memo');
+            }
+            if (!in_array($memo['status'], $deletableStatuses, true)) {
+                flash('error', 'ลบไม่ได้ — สถานะปัจจุบัน "' . $memo['status'] . '" (ลบได้เฉพาะ draft / cancelled / rejected)');
+                $this->redirect('/memos/' . $id);
+            }
+        }
+
+        Database::beginTransaction();
+        try {
+            // 1. Delete physical files for memo + memo-item + payment attachments
+            $itemIds = array_column(
+                Database::select("SELECT id FROM memo_items WHERE memo_id = ?", [$id]),
+                'id'
+            );
+            $paymentIds = array_column(
+                Database::select("SELECT id FROM payments WHERE memo_id = ?", [$id]),
+                'id'
+            );
+
+            $files = Database::select(
+                "SELECT file_url FROM attachments
+                 WHERE (related_type='memo'      AND related_id = ?)
+                    " . ($itemIds    ? "OR (related_type='memo_item' AND related_id IN (" . implode(',', array_map('intval', $itemIds)) . "))" : "") . "
+                    " . ($paymentIds ? "OR (related_type='payment'   AND related_id IN (" . implode(',', array_map('intval', $paymentIds)) . "))" : "") . "
+                ",
+                [$id]
+            );
+
+            $cfg = config('upload');
+            foreach ($files as $f) {
+                // file_url is "/storage/uploads/memos/{id}/xxx" — convert to absolute filesystem path
+                $rel = ltrim($f['file_url'], '/');
+                if (str_starts_with($rel, 'storage/uploads/')) {
+                    $abs = $cfg['path'] . substr($rel, strlen('storage/uploads'));
+                    if (is_file($abs)) @unlink($abs);
+                }
+            }
+
+            // 2. Delete attachment DB rows (no CASCADE since polymorphic)
+            $where = ["(related_type='memo' AND related_id = ?)"];
+            $params = [$id];
+            if ($itemIds) {
+                $where[] = "(related_type='memo_item' AND related_id IN (" . implode(',', array_map('intval', $itemIds)) . "))";
+            }
+            if ($paymentIds) {
+                $where[] = "(related_type='payment' AND related_id IN (" . implode(',', array_map('intval', $paymentIds)) . "))";
+            }
+            Database::execute("DELETE FROM attachments WHERE " . implode(' OR ', $where), $params);
+
+            // 3. Delete the memo itself — items, payments, approval_logs, comments cascade automatically
+            Memo::delete($id);
+
+            Database::commit();
+            flash('success', 'ลบ Memo เรียบร้อย — ' . ($memo['memo_no'] ?: 'DRAFT'));
+            $this->redirect('/memos');
+        } catch (\Throwable $e) {
+            Database::rollBack();
+            flash('error', 'ลบไม่สำเร็จ: ' . $e->getMessage());
+            $this->redirect('/memos/' . $id);
+        }
+    }
+
     public function pdf(int $id): void
     {
         Auth::require();

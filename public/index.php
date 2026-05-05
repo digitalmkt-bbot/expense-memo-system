@@ -46,6 +46,7 @@ $router->get('/memos/{id}/edit',         'MemoController@edit');
 $router->post('/memos/{id}',             'MemoController@update');
 $router->post('/memos/{id}/submit',      'MemoController@submit');
 $router->post('/memos/{id}/cancel',      'MemoController@cancel');
+$router->post('/memos/{id}/delete',      'MemoController@destroy');
 $router->get('/memos/{id}/pdf',          'MemoController@pdf');
 
 // ----- Memo Items -----

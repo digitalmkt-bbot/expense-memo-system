@@ -14,6 +14,15 @@
                     <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Company / Dept</th><th>Status</th><th></th></tr></thead>
                     <tbody>
                         <?php foreach ($users as $u): ?>
+                            <?php
+                                // Director with NULL company_id → "All Companies"
+                                $companyDisplay = $u['company_code'] ?? null;
+                                if (!$companyDisplay && $u['role'] === 'director') {
+                                    $companyDisplay = '🌐 All Companies';
+                                } elseif (!$companyDisplay) {
+                                    $companyDisplay = '-';
+                                }
+                            ?>
                             <tr>
                                 <td>
                                     <span class="avatar-sm"><?= strtoupper(substr($u['full_name'] ?? 'U', 0, 1)) ?></span>
@@ -22,7 +31,7 @@
                                 </td>
                                 <td><span class="text-muted small"><?= e($u['email']) ?></span></td>
                                 <td><span class="role-tag"><?= e($u['role']) ?></span></td>
-                                <td><span class="text-muted small"><?= e($u['company_code'] ?? '-') ?> / <?= e($u['department_code'] ?? '-') ?></span></td>
+                                <td><span class="text-muted small"><?= e($companyDisplay) ?> <?= !empty($u['department_code']) ? '/ ' . e($u['department_code']) : '' ?></span></td>
                                 <td><?= $u['is_active'] ? '<span class="status approved">Active</span>' : '<span class="status cancelled">Inactive</span>' ?></td>
                                 <td><button class="btn btn-sm btn-outline-secondary" onclick='editUser(<?= json_encode($u) ?>)'><i class="bi bi-pencil"></i></button></td>
                             </tr>
@@ -56,7 +65,7 @@
                     </div>
                     <div class="col-6"><label class="form-label">Company</label>
                         <select name="company_id" id="company_id" class="form-select form-select-sm">
-                            <option value="">—</option>
+                            <option value="">🌐 All Companies (Director)</option>
                             <?php foreach ($companies as $c): ?>
                                 <option value="<?= $c['id'] ?>"><?= e($c['company_code']) ?></option>
                             <?php endforeach; ?>
@@ -70,6 +79,9 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div class="col-12"><small class="text-soft" style="font-size: 11.5px;">
+                        💡 <strong>Director ที่ดูแลทั้ง 2 บริษัท</strong> — เลือก "🌐 All Companies" เพื่อให้ approve memo จากทุกบริษัท
+                    </small></div>
                     <div class="col-12">
                         <label style="display: flex; align-items: center; gap: 8px;">
                             <input type="checkbox" name="is_active" id="is_active" value="1" checked> <span class="form-label" style="margin: 0;">Active</span>
