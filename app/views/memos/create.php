@@ -1,11 +1,20 @@
 <?php $u = user(); ?>
-<form method="post" action="<?= url('/memos') ?>" class="row g-3">
+
+<div class="page-title">
+    <div>
+        <h3>Create Memo</h3>
+        <div class="meta">เริ่มสร้าง Memo ค่าใช้จ่ายใหม่</div>
+    </div>
+    <a href="<?= url('/memos') ?>" class="btn btn-light"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+
+<form method="post" action="<?= url('/memos') ?>">
     <?= csrf_field() ?>
 
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-white"><strong>Memo Header</strong></div>
-            <div class="card-body row g-3">
+    <div class="emm-card mb-3">
+        <div class="emm-card-header"><strong>Memo Header</strong> <span class="text-soft small">ข้อมูลหัว Memo</span></div>
+        <div class="emm-card-body">
+            <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Company *</label>
                     <select name="company_id" id="company_id" class="form-select" required>
@@ -69,18 +78,18 @@
                     <textarea name="description" class="form-control" rows="3"></textarea>
                 </div>
             </div>
-            <div class="card-footer bg-white text-end">
-                <a href="<?= url('/memos') ?>" class="btn btn-light">Cancel</a>
-                <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-save"></i> Save Draft & Continue
-                </button>
-            </div>
         </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <a href="<?= url('/memos') ?>" class="btn btn-light">Cancel</a>
+        <button class="btn btn-primary" type="submit">
+            <i class="bi bi-save"></i> Save Draft & Continue
+        </button>
     </div>
 </form>
 
 <script>
-// Cascade Department by Company
 document.getElementById('company_id').addEventListener('change', async function() {
     const companyId = this.value;
     const sel = document.getElementById('department_id');

@@ -1,49 +1,55 @@
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div></div>
-    <a href="<?= url('/memos/create') ?>" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Create Memo
-    </a>
+<div class="page-title">
+    <div>
+        <h3>Memos</h3>
+        <div class="meta">รายการ Memo ค่าใช้จ่ายทั้งหมด</div>
+    </div>
+    <div>
+        <a href="<?= url('/memos/create') ?>" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create Memo
+        </a>
+    </div>
 </div>
 
-<form method="get" class="card mb-3">
-    <div class="card-body p-3">
+<form method="get" class="emm-card mb-3">
+    <div class="emm-card-body" style="padding: 14px 16px;">
         <div class="row g-2">
-            <div class="col-md-3">
-                <input type="text" name="q" class="form-control form-control-sm" placeholder="Search memo no. / subject" value="<?= e($filter['keyword'] ?? '') ?>">
+            <div class="col-lg-3 col-md-6">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="🔍 Search memo no. หรือ subject" value="<?= e($filter['keyword'] ?? '') ?>">
             </div>
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-3 col-6">
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All Status</option>
                     <?php foreach (['draft','submitted','manager_approved','accounting_checked','approved','pending_payment','partially_paid','paid','closed','rejected','revision_required','cancelled'] as $s): ?>
-                        <option value="<?= $s ?>" <?= ($filter['status'] ?? '') === $s ? 'selected' : '' ?>><?= strtoupper(str_replace('_', ' ', $s)) ?></option>
+                        <option value="<?= $s ?>" <?= ($filter['status'] ?? '') === $s ? 'selected' : '' ?>><?= ucwords(str_replace('_', ' ', $s)) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-3 col-6">
                 <select name="company" class="form-select form-select-sm">
                     <option value="">All Company</option>
                     <?php foreach ($companies as $c): ?>
-                        <option value="<?= $c['id'] ?>" <?= ($filter['company_id'] ?? '') == $c['id'] ? 'selected' : '' ?>><?= e($c['company_code']) ?></option>
+                        <option value="<?= $c['id'] ?>" <?= ($filter['company_id'] ?? '') == $c['id'] ? 'selected' : '' ?>><?= e($c['company_code']) ?> — <?= e($c['company_name']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-2"><input type="date" name="from" class="form-control form-control-sm" value="<?= e($filter['date_from'] ?? '') ?>"></div>
-            <div class="col-md-2"><input type="date" name="to"   class="form-control form-control-sm" value="<?= e($filter['date_to'] ?? '') ?>"></div>
-            <div class="col-md-1"><button class="btn btn-sm btn-outline-primary w-100">Filter</button></div>
+            <div class="col-lg-2 col-md-3 col-6"><input type="date" name="from" class="form-control form-control-sm" value="<?= e($filter['date_from'] ?? '') ?>"></div>
+            <div class="col-lg-2 col-md-3 col-6"><input type="date" name="to" class="form-control form-control-sm" value="<?= e($filter['date_to'] ?? '') ?>"></div>
+            <div class="col-lg-1 col-12">
+                <button class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-funnel"></i> Filter</button>
+            </div>
         </div>
     </div>
 </form>
 
-<div class="card">
+<div class="emm-card">
     <div class="table-responsive">
-        <table class="table table-hover table-sm mb-0">
-            <thead class="table-light">
+        <table class="emm-table">
+            <thead>
                 <tr>
                     <th>Memo No.</th>
                     <th>Date</th>
                     <th>Company / Dept</th>
-                    <th>Subject</th>
-                    <th>Type</th>
+                    <th>Subject · Type</th>
                     <th>Requester</th>
                     <th class="text-end">Total</th>
                     <th class="text-end">Net</th>
@@ -54,20 +60,31 @@
             </thead>
             <tbody>
                 <?php if (!$memos): ?>
-                    <tr><td colspan="11" class="text-center text-muted py-4">ไม่พบ Memo</td></tr>
+                    <tr><td colspan="10" class="text-center" style="padding: 40px 14px; color: var(--emm-text-soft);">
+                        <i class="bi bi-inbox" style="font-size: 32px; display: block; margin-bottom: 8px; opacity: .5;"></i>
+                        ไม่พบ Memo ตามเงื่อนไข
+                    </td></tr>
                 <?php endif; ?>
                 <?php foreach ($memos as $m): ?>
                     <tr>
-                        <td><a href="<?= url('/memos/' . $m['id']) ?>"><strong><?= e($m['memo_no'] ?? 'DRAFT-#'. $m['id']) ?></strong></a></td>
-                        <td><?= format_date($m['memo_date']) ?></td>
-                        <td><small><?= e($m['company_code']) ?> / <?= e($m['department_code']) ?></small></td>
-                        <td><?= e($m['subject']) ?></td>
-                        <td><small class="text-muted"><?= e(memo_type_label($m['memo_type'])) ?></small></td>
-                        <td><small><?= e($m['requester_name']) ?></small></td>
-                        <td class="text-end"><?= format_money($m['total_amount']) ?></td>
-                        <td class="text-end"><strong><?= format_money($m['net_amount']) ?></strong></td>
-                        <td><?= status_badge($m['status']) ?></td>
-                        <td><small><?= e($m['payment_status']) ?></small></td>
+                        <td><a href="<?= url('/memos/' . $m['id']) ?>" style="font-weight: 600;"><?= e($m['memo_no'] ?? 'DRAFT-#'. $m['id']) ?></a></td>
+                        <td><span class="text-muted"><?= format_date($m['memo_date']) ?></span></td>
+                        <td>
+                            <span class="role-tag" style="background: var(--emm-bg); color: var(--emm-text-muted);"><?= e($m['company_code']) ?></span>
+                            <span class="text-muted small"><?= e($m['department_code']) ?></span>
+                        </td>
+                        <td>
+                            <div><?= e($m['subject']) ?></div>
+                            <small class="text-soft"><?= e(memo_type_label($m['memo_type'])) ?></small>
+                        </td>
+                        <td>
+                            <span class="avatar-sm"><?= strtoupper(substr($m['requester_name'] ?? 'U', 0, 1)) ?></span>
+                            <span class="text-muted small"><?= e($m['requester_name']) ?></span>
+                        </td>
+                        <td class="text-end money"><?= format_money($m['total_amount']) ?></td>
+                        <td class="text-end money"><?= format_money($m['net_amount']) ?></td>
+                        <td><span class="status <?= e($m['status']) ?>"><?= strtoupper(str_replace('_', ' ', $m['status'])) ?></span></td>
+                        <td><span class="status <?= e($m['payment_status']) ?>"><?= strtoupper(str_replace('_', ' ', $m['payment_status'])) ?></span></td>
                         <td>
                             <a href="<?= url('/memos/' . $m['id']) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
                         </td>

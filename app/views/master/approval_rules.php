@@ -1,27 +1,37 @@
-<div class="alert alert-info">
-    Approval Rules ใช้ตัดสินว่า Memo จำนวนเงินไหนต้องผ่านใครบ้าง<br>
-    <small>แก้ไข Rules ใน DB หรือเพิ่ม UI ภายหลัง — Default seeded จาก <code>02_seed.sql</code></small>
+<div class="page-title">
+    <div>
+        <h3>Approval Rules</h3>
+        <div class="meta">กฎการอนุมัติตามจำนวนเงิน</div>
+    </div>
 </div>
 
-<div class="card"><div class="table-responsive">
-<table class="table table-hover table-sm mb-0">
-    <thead class="table-light"><tr>
-        <th>Company</th><th>Memo Type</th>
-        <th class="text-end">Min Amount</th><th class="text-end">Max Amount</th>
-        <th class="text-center">Level</th><th>Approver Role</th><th>Status</th>
-    </tr></thead>
-    <tbody>
-        <?php foreach ($rules as $r): ?>
-            <tr>
-                <td><strong><?= e($r['company_code'] ?? 'ALL') ?></strong></td>
-                <td><?= e($r['memo_type'] ?? 'ALL') ?></td>
-                <td class="text-end"><?= format_money($r['min_amount']) ?></td>
-                <td class="text-end"><?= $r['max_amount'] ? format_money($r['max_amount']) : '∞' ?></td>
-                <td class="text-center"><span class="badge bg-secondary"><?= e($r['approval_level']) ?></span></td>
-                <td><strong class="text-primary"><?= e($r['approver_role']) ?></strong></td>
-                <td><?= $r['is_active'] ? '<span class="text-success">Active</span>' : '<span class="text-muted">Inactive</span>' ?></td>
-            </tr>
-        <?php endforeach; ?>
-    </tbody>
-</table>
-</div></div>
+<div class="alert alert-info mb-3">
+    <i class="bi bi-info-circle"></i> Approval Rules ใช้ตัดสินว่า Memo จำนวนเงินไหนต้องผ่านใครบ้าง — แก้ไขได้ใน DB หรือเพิ่ม UI ภายหลัง
+</div>
+
+<div class="emm-card">
+    <div class="table-responsive">
+        <table class="emm-table">
+            <thead>
+                <tr>
+                    <th>Company</th><th>Memo Type</th>
+                    <th class="text-end">Min Amount</th><th class="text-end">Max Amount</th>
+                    <th class="text-center">Level</th><th>Approver Role</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($rules as $r): ?>
+                    <tr>
+                        <td><span class="role-tag"><?= e($r['company_code'] ?? 'ALL') ?></span></td>
+                        <td class="text-muted small"><?= e($r['memo_type'] ?? 'ALL') ?></td>
+                        <td class="text-end money"><?= format_money($r['min_amount']) ?></td>
+                        <td class="text-end money"><?= $r['max_amount'] ? format_money($r['max_amount']) : '∞' ?></td>
+                        <td class="text-center"><span class="role-tag" style="background: var(--emm-bg); color: var(--emm-text-muted);">L<?= e($r['approval_level']) ?></span></td>
+                        <td><strong style="color: var(--emm-primary);"><?= e($r['approver_role']) ?></strong></td>
+                        <td><?= $r['is_active'] ? '<span class="status approved">Active</span>' : '<span class="status cancelled">Inactive</span>' ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
