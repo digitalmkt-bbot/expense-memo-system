@@ -52,13 +52,8 @@
                     </select>
                 </div>
                 <div class="col-md-5">
-                    <label class="form-label">Project / Campaign / Trip</label>
-                    <select name="project_id" class="form-select">
-                        <option value="">— ไม่ระบุ —</option>
-                        <?php foreach ($projects as $p): ?>
-                            <option value="<?= $p['id'] ?>"><?= e($p['project_code']) ?> — <?= e($p['project_name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <label class="form-label">Project / Campaign / Trip <span class="text-soft">(กรอกเอง)</span></label>
+                    <input type="text" name="project_name_text" class="form-control" placeholder="ระบุชื่อ Project / Campaign / Trip — เว้นว่างได้">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Requester</label>

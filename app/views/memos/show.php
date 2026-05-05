@@ -25,7 +25,16 @@
                     <div class="col-md-3"><div class="text-soft small mb-1">Department</div><strong><?= e($memo['department_code']) ?></strong></div>
                     <div class="col-md-3"><div class="text-soft small mb-1">Memo Date</div><?= format_date($memo['memo_date']) ?></div>
                     <div class="col-md-3"><div class="text-soft small mb-1">Required Pay</div><?= format_date($memo['required_payment_date']) ?></div>
-                    <div class="col-md-6"><div class="text-soft small mb-1">Project</div><?= e($memo['project_code'] ?? '-') ?> <span class="text-muted"><?= e($memo['project_name'] ?? '') ?></span></div>
+                    <div class="col-md-6"><div class="text-soft small mb-1">Project</div>
+                        <?php $projDisplay = $memo['project_name_text'] ?? null; ?>
+                        <?php if ($projDisplay): ?>
+                            <?= e($projDisplay) ?>
+                        <?php elseif (!empty($memo['project_code'])): ?>
+                            <?= e($memo['project_code']) ?> <span class="text-muted"><?= e($memo['project_name']) ?></span>
+                        <?php else: ?>
+                            <span class="text-soft">—</span>
+                        <?php endif; ?>
+                    </div>
                     <div class="col-md-6"><div class="text-soft small mb-1">Requester</div>
                         <span class="avatar-sm"><?= strtoupper(substr($memo['requester_name'] ?? 'U', 0, 1)) ?></span>
                         <?= e($memo['requester_name']) ?> <span class="text-muted small">(<?= e($memo['requester_email']) ?>)</span>
@@ -53,7 +62,7 @@
                                 <td class="text-muted small"><?= format_date($i['expense_date']) ?></td>
                                 <td class="text-muted small"><?= e($i['category_name'] ?? '-') ?></td>
                                 <td><?= e($i['item_name']) ?></td>
-                                <td class="text-muted small"><?= e($i['supplier_name'] ?? '-') ?></td>
+                                <td class="text-muted small"><?= e($i['supplier_name_text'] ?? $i['supplier_name'] ?? '-') ?></td>
                                 <td class="text-end money"><?= format_money($i['quantity']) ?></td>
                                 <td class="text-end money"><?= format_money($i['unit_price']) ?></td>
                                 <td class="text-end money"><?= format_money($i['amount']) ?></td>

@@ -61,7 +61,7 @@
             <td class="label">Memo Type:</td>
             <td class="value"><?= e(memo_type_label($memo['memo_type'])) ?></td>
             <td class="label">Project:</td>
-            <td class="value"><?= e($memo['project_code'] ?? '-') ?></td>
+            <td class="value"><?= e($memo['project_name_text'] ?? $memo['project_code'] ?? '-') ?></td>
         </tr>
         <tr>
             <td class="label">Requester:</td>
@@ -103,7 +103,7 @@
             <td><?= e($i['item_name']) ?>
                 <?php if ($i['description']): ?><br><span class="small"><?= e($i['description']) ?></span><?php endif; ?>
             </td>
-            <td><?= e($i['supplier_name'] ?? '-') ?></td>
+            <td><?= e($i['supplier_name_text'] ?? $i['supplier_name'] ?? '-') ?></td>
             <td class="text-end"><?= format_money($i['quantity']) ?></td>
             <td class="text-end"><?= format_money($i['unit_price']) ?></td>
             <td class="text-end"><?= format_money($i['amount']) ?></td>

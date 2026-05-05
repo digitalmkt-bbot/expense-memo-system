@@ -47,13 +47,8 @@
                             </select>
                         </div>
                         <div class="col-md-9">
-                            <label class="form-label">Project</label>
-                            <select name="project_id" class="form-select">
-                                <option value="">— ไม่ระบุ —</option>
-                                <?php foreach ($projects as $p): ?>
-                                    <option value="<?= $p['id'] ?>" <?= $memo['project_id'] == $p['id'] ? 'selected' : '' ?>><?= e($p['project_code']) ?> — <?= e($p['project_name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label class="form-label">Project / Campaign / Trip <span class="text-soft">(กรอกเอง)</span></label>
+                            <input type="text" name="project_name_text" class="form-control" value="<?= e($memo['project_name_text'] ?? '') ?>" placeholder="ระบุชื่อ Project / Campaign / Trip — เว้นว่างได้">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Subject</label>
@@ -99,7 +94,8 @@
                                 <td><span class="text-muted small"><?= e($i['category_name'] ?? '-') ?></span></td>
                                 <td>
                                     <?= e($i['item_name']) ?>
-                                    <?php if ($i['supplier_name']): ?><br><small class="text-soft">@ <?= e($i['supplier_name']) ?></small><?php endif; ?>
+                                    <?php $sup = $i['supplier_name_text'] ?? $i['supplier_name'] ?? null; ?>
+                                    <?php if ($sup): ?><br><small class="text-soft">@ <?= e($sup) ?></small><?php endif; ?>
                                 </td>
                                 <td class="text-end money"><?= format_money($i['quantity']) ?></td>
                                 <td class="text-end money"><?= format_money($i['unit_price']) ?></td>
@@ -196,13 +192,8 @@
                         <input type="text" name="item_name" class="form-control form-control-sm" required>
                     </div>
                     <div class="col-12">
-                        <label class="form-label">Supplier</label>
-                        <select name="supplier_id" class="form-select form-select-sm">
-                            <option value="">—</option>
-                            <?php foreach ($suppliers as $s): ?>
-                                <option value="<?= $s['id'] ?>"><?= e($s['supplier_name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label class="form-label">Supplier <span class="text-soft">(กรอกเอง)</span></label>
+                        <input type="text" name="supplier_name_text" class="form-control form-control-sm" placeholder="ระบุชื่อ Supplier / Vendor">
                     </div>
                     <div class="col-6"><label class="form-label">Qty</label><input type="number" step="0.01" name="quantity" class="form-control form-control-sm" value="1"></div>
                     <div class="col-6"><label class="form-label">Unit</label><input type="text" name="unit" class="form-control form-control-sm"></div>

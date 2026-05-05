@@ -72,7 +72,25 @@ if (!$hasSchema) {
     $pdo->exec($seedSql);
     echo "✅ Seed data loaded (Companies, Departments, Categories, Demo users)\n";
 } else {
-    echo "\n✅ Schema exists — skipping migration\n";
+    echo "\n✅ Schema exists — running incremental migrations\n";
+
+    // ─── Migration: add manual-entry text columns ───
+    $colExists = function (string $table, string $col) use ($pdo): bool {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM information_schema.columns
+            WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?");
+        $stmt->execute([$table, $col]);
+        return (bool) $stmt->fetchColumn();
+    };
+
+    if (!$colExists('memos', 'project_name_text')) {
+        $pdo->exec("ALTER TABLE memos ADD COLUMN project_name_text VARCHAR(255) NULL AFTER project_id");
+        echo "  ↳ Added memos.project_name_text\n";
+    }
+    if (!$colExists('memo_items', 'supplier_name_text')) {
+        $pdo->exec("ALTER TABLE memo_items ADD COLUMN supplier_name_text VARCHAR(255) NULL AFTER supplier_id");
+        echo "  ↳ Added memo_items.supplier_name_text\n";
+    }
+    echo "✅ Migrations complete\n";
 }
 
 // Setup admin user from ENV
