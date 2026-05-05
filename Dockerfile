@@ -16,7 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ---- Apache configuration ----
-RUN a2enmod rewrite headers expires deflate
+# Ensure only one MPM is loaded (php:8.2-apache uses mpm_prefork because of mod_php)
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork \
+    && a2enmod rewrite headers expires deflate
 
 # Set Apache to listen on $PORT (Railway-friendly)
 RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf \
