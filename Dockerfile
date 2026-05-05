@@ -16,10 +16,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ---- Apache configuration ----
-# Ensure only one MPM is loaded (php:8.2-apache uses mpm_prefork because of mod_php)
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+# Force only mpm_prefork (mod_php requires it). Remove all MPM symlinks first
+# to avoid "More than one MPM loaded" errors at startup.
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
+            /etc/apache2/mods-enabled/mpm_*.conf \
     && a2enmod mpm_prefork \
-    && a2enmod rewrite headers expires deflate
+    && a2enmod rewrite headers expires deflate \
+    && echo "Enabled MPM modules:" && ls /etc/apache2/mods-enabled/ | grep mpm
 
 # Set Apache to listen on $PORT (Railway-friendly)
 RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf \

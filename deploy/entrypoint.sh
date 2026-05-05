@@ -26,6 +26,17 @@ echo "🔵 Configuring Apache for port ${PORT}..."
 sed -i "s|\${PORT}|${PORT}|g" /etc/apache2/ports.conf
 sed -i "s|\${PORT}|${PORT}|g" /etc/apache2/sites-available/000-default.conf
 
+# ─── Ensure only mpm_prefork is loaded (safety net for MPM conflicts) ───
+echo "🔵 Verifying Apache MPM..."
+for mpm in event worker; do
+    if [ -L "/etc/apache2/mods-enabled/mpm_${mpm}.load" ]; then
+        echo "  → Disabling mpm_${mpm}"
+        a2dismod mpm_${mpm} 2>/dev/null || true
+    fi
+done
+a2enmod mpm_prefork 2>/dev/null || true
+echo "  Enabled MPMs: $(ls /etc/apache2/mods-enabled/ | grep mpm | tr '\n' ' ')"
+
 # ─── Run auto-installer ───
 if [ "${AUTO_INSTALL:-true}" = "true" ]; then
     echo "🔵 Running auto-installer..."
