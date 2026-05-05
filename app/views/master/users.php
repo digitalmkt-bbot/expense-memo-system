@@ -33,7 +33,24 @@
                                 <td><span class="role-tag"><?= e($u['role']) ?></span></td>
                                 <td><span class="text-muted small"><?= e($companyDisplay) ?> <?= !empty($u['department_code']) ? '/ ' . e($u['department_code']) : '' ?></span></td>
                                 <td><?= $u['is_active'] ? '<span class="status approved">Active</span>' : '<span class="status cancelled">Inactive</span>' ?></td>
-                                <td><button class="btn btn-sm btn-outline-secondary" onclick='editUser(<?= json_encode($u) ?>)'><i class="bi bi-pencil"></i></button></td>
+                                <td style="white-space: nowrap;">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick='editUser(<?= json_encode($u) ?>)' title="Edit"><i class="bi bi-pencil"></i></button>
+                                    <?php $self = (int) user()['id'] === (int) $u['id']; ?>
+                                    <?php if (!$self): ?>
+                                        <form method="post" action="<?= url('/master/users/' . $u['id'] . '/toggle') ?>" style="display:inline;" onsubmit="return confirm('<?= $u['is_active'] ? 'ปิดใช้งาน' : 'เปิดใช้งาน' ?> user นี้?')">
+                                            <?= csrf_field() ?>
+                                            <button class="btn btn-sm <?= $u['is_active'] ? 'btn-outline-warning' : 'btn-outline-success' ?>" title="<?= $u['is_active'] ? 'Disable' : 'Enable' ?>">
+                                                <i class="bi <?= $u['is_active'] ? 'bi-pause-circle' : 'bi-play-circle' ?>"></i>
+                                            </button>
+                                        </form>
+                                        <form method="post" action="<?= url('/master/users/' . $u['id'] . '/delete') ?>" style="display:inline;" onsubmit="return confirm('ลบ user นี้?\n\n⚠️ ลบได้เฉพาะ user ที่ยังไม่มีข้อมูลในระบบ\nหากมีข้อมูลแล้ว ระบบจะแนะนำให้ปิดใช้งานแทน')">
+                                            <?= csrf_field() ?>
+                                            <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="text-soft small" style="margin-left: 4px;" title="Cannot modify yourself">— self —</span>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

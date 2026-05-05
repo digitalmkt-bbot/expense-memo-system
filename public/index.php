@@ -81,6 +81,8 @@ $router->get('/reports/pending-payment',        'ReportController@pendingPayment
 // ----- Master Data (Admin) -----
 $router->get('/master/users',                   'MasterDataController@users');
 $router->post('/master/users',                  'MasterDataController@saveUser');
+$router->post('/master/users/{id}/delete',      'MasterDataController@deleteUser');
+$router->post('/master/users/{id}/toggle',      'MasterDataController@toggleUser');
 $router->get('/master/companies',               'MasterDataController@companies');
 $router->get('/master/departments',             'MasterDataController@departments');
 $router->get('/master/categories',              'MasterDataController@categories');

@@ -63,6 +63,104 @@ class MasterDataController extends Controller
         $this->redirect('/master/users');
     }
 
+    /**
+     * Delete a user (admin only) with safety checks.
+     * Refuses if:
+     *   - Trying to delete self
+     *   - Last remaining admin
+     *   - User has related data (memos, payments, etc.) → suggest disable instead
+     */
+    public function deleteUser(int $id): void
+    {
+        $this->adminOnly();
+        if (!verify_csrf()) $this->abort(419);
+
+        $target = User::find($id);
+        if (!$target) $this->abort(404);
+
+        // Cannot delete self
+        if ((int) Auth::id() === (int) $id) {
+            flash('error', '❌ ลบ user ของตัวเองไม่ได้');
+            $this->redirect('/master/users');
+        }
+
+        // Cannot delete last admin
+        if ($target['role'] === 'admin') {
+            $adminCount = (int) Database::selectOne(
+                "SELECT COUNT(*) c FROM users WHERE role = 'admin' AND is_active = 1"
+            )['c'];
+            if ($adminCount <= 1) {
+                flash('error', '❌ ลบ admin คนสุดท้ายไม่ได้ — สร้าง admin คนอื่นก่อน');
+                $this->redirect('/master/users');
+            }
+        }
+
+        // Check related data — refuse hard delete if user has any references
+        $refs = [
+            'memos (requester)'          => "SELECT COUNT(*) c FROM memos WHERE requester_id = ?",
+            'payments (paid by)'         => "SELECT COUNT(*) c FROM payments WHERE paid_by = ?",
+            'approval logs'              => "SELECT COUNT(*) c FROM approval_logs WHERE approver_id = ?",
+            'memo comments'              => "SELECT COUNT(*) c FROM memo_comments WHERE user_id = ?",
+            'memo payment requests'      => "SELECT COUNT(*) c FROM memo_payment_requests WHERE payee_user_id = ?",
+            'approval rules (assignee)'  => "SELECT COUNT(*) c FROM approval_rules WHERE approver_user_id = ?",
+        ];
+
+        $blocking = [];
+        foreach ($refs as $label => $sql) {
+            $cnt = (int) Database::selectOne($sql, [$id])['c'];
+            if ($cnt > 0) $blocking[] = "$label ($cnt)";
+        }
+
+        if ($blocking) {
+            flash('error',
+                '❌ ลบไม่ได้ — user นี้มีข้อมูลที่อ้างอิงอยู่: ' . implode(', ', $blocking) .
+                ' — ใช้ปุ่ม Disable แทน (ปิดการใช้งานแต่เก็บประวัติ)');
+            $this->redirect('/master/users');
+        }
+
+        try {
+            User::delete($id);
+            flash('success', '✅ ลบ user "' . e($target['full_name']) . '" เรียบร้อย');
+        } catch (\Throwable $e) {
+            flash('error', 'ลบไม่สำเร็จ: ' . $e->getMessage());
+        }
+        $this->redirect('/master/users');
+    }
+
+    /**
+     * Quick toggle is_active without opening edit form
+     */
+    public function toggleUser(int $id): void
+    {
+        $this->adminOnly();
+        if (!verify_csrf()) $this->abort(419);
+
+        $target = User::find($id);
+        if (!$target) $this->abort(404);
+
+        if ((int) Auth::id() === (int) $id) {
+            flash('error', '❌ ปิดใช้งาน user ของตัวเองไม่ได้');
+            $this->redirect('/master/users');
+        }
+
+        // Don't disable last active admin
+        if ($target['role'] === 'admin' && $target['is_active']) {
+            $activeAdmins = (int) Database::selectOne(
+                "SELECT COUNT(*) c FROM users WHERE role = 'admin' AND is_active = 1"
+            )['c'];
+            if ($activeAdmins <= 1) {
+                flash('error', '❌ ปิดใช้งาน admin คนสุดท้ายไม่ได้');
+                $this->redirect('/master/users');
+            }
+        }
+
+        $newState = $target['is_active'] ? 0 : 1;
+        Database::execute("UPDATE users SET is_active = ? WHERE id = ?", [$newState, $id]);
+
+        flash('success', ($newState ? '✅ เปิดใช้งาน' : '🔒 ปิดใช้งาน') . ' "' . e($target['full_name']) . '" เรียบร้อย');
+        $this->redirect('/master/users');
+    }
+
     // ----- Companies / Departments (read-only display) -----
     public function companies(): void
     {
