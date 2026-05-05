@@ -1,19 +1,17 @@
 <?php
-$mc = $kpi['month_change'] ?? null;
+$mc = $kpi['period_change'] ?? null;
 $trendDir = $mc === null ? 'flat' : ($mc >= 0 ? 'up' : 'down');
 $trendIcon = $mc === null ? 'bi-dash' : ($mc >= 0 ? 'bi-arrow-up-right' : 'bi-arrow-down-right');
-$trendLabel = $mc === null ? '— vs last month' : abs($mc) . '% vs last month';
+$trendLabel = $mc === null ? '— vs prev period' : abs($mc) . '% vs prev period';
 
-// Build amounts for sparkline (use trend data)
+// Chart data
 $trendAmounts = array_map(fn($t) => round($t['amount']), $trend);
 $trendLabels  = array_map(fn($t) => $t['label'], $trend);
 $trendCounts  = array_map(fn($t) => $t['cnt'], $trend);
 
-// Category amounts max for progress bars
 $catMax = 0;
 foreach ($topCategories as $c) $catMax = max($catMax, (float) $c['amount']);
 
-// Status distribution map
 $statusColors = [
     'draft'              => '#94a3b8',
     'submitted'          => '#5b6cff',
@@ -32,25 +30,45 @@ $statusColors = [
 $statusLabelsJson = json_encode(array_map(fn($r) => strtoupper(str_replace('_',' ',$r['status'])), $statusDist));
 $statusValuesJson = json_encode(array_map(fn($r) => (int) $r['cnt'], $statusDist));
 $statusColorsJson = json_encode(array_map(fn($r) => $statusColors[$r['status']] ?? '#94a3b8', $statusDist));
+
+$active = fn($p) => $period === $p ? 'active' : '';
 ?>
 
 <div class="page-title">
     <div>
         <h3>Dashboard</h3>
-        <div class="meta">ภาพรวมระบบ Memo ค่าใช้จ่าย — <?= date('d M Y') ?></div>
+        <div class="meta">ภาพรวมระบบ Memo ค่าใช้จ่าย — <?= e($range['label']) ?></div>
     </div>
-    <div class="d-flex gap-2 align-items-center">
+    <div class="d-flex gap-2 align-items-center flex-wrap">
         <div class="period-pills">
-            <a href="?period=week">Week</a>
-            <a href="?period=month" class="active">Month</a>
-            <a href="?period=quarter">Quarter</a>
-            <a href="?period=year">Year</a>
+            <a href="?period=week"    class="<?= $active('week') ?>">Week</a>
+            <a href="?period=month"   class="<?= $active('month') ?>">Month</a>
+            <a href="?period=quarter" class="<?= $active('quarter') ?>">Quarter</a>
+            <a href="?period=year"    class="<?= $active('year') ?>">Year</a>
+            <a href="#" id="customToggle" class="<?= $active('custom') ?>">Custom</a>
         </div>
         <a href="<?= url('/memos/create') ?>" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Create Memo
         </a>
     </div>
 </div>
+
+<!-- Custom date range picker (toggleable) -->
+<form method="get" id="customForm" class="emm-card mb-3" style="<?= $period === 'custom' ? '' : 'display:none;' ?>">
+    <input type="hidden" name="period" value="custom">
+    <div class="emm-card-body" style="padding: 12px 16px; display: flex; gap: 10px; align-items: end; flex-wrap: wrap;">
+        <div>
+            <label class="form-label">From</label>
+            <input type="date" name="from" class="form-control form-control-sm" value="<?= e($_GET['from'] ?? $range['from']) ?>" required>
+        </div>
+        <div>
+            <label class="form-label">To</label>
+            <input type="date" name="to" class="form-control form-control-sm" value="<?= e($_GET['to'] ?? $range['to']) ?>" required>
+        </div>
+        <button class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Apply</button>
+        <small class="text-muted ms-2">เลือกช่วงวันที่เอง · กรองทุก KPI + กราฟตามช่วงนี้</small>
+    </div>
+</form>
 
 <!-- Hero KPI grid -->
 <div class="hero-grid mb-4">
@@ -59,9 +77,9 @@ $statusColorsJson = json_encode(array_map(fn($r) => $statusColors[$r['status']] 
             <div class="ico" style="background: rgba(139,92,246,.15); color: var(--emm-violet);"><i class="bi bi-cash-coin"></i></div>
             <span class="trend <?= $trendDir ?>"><i class="bi <?= $trendIcon ?>"></i> <?= e($trendLabel) ?></span>
         </div>
-        <div class="lab">This Month (THB)</div>
-        <div class="num"><?= format_money($kpi['this_month']) ?></div>
-        <div class="sub">Net amount · <?= date('M Y') ?></div>
+        <div class="lab">Spend in period (THB)</div>
+        <div class="num"><?= format_money($kpi['period_total']) ?></div>
+        <div class="sub">Net amount · <?= e($range['label']) ?></div>
         <svg class="spark" width="160" height="48" viewBox="0 0 160 48"><polyline id="spark1" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
     </div>
     <div class="hero-kpi gradient-orange">
@@ -98,8 +116,8 @@ $statusColorsJson = json_encode(array_map(fn($r) => $statusColors[$r['status']] 
     <div class="col-lg-8">
         <div class="chart-card">
             <div class="chart-head">
-                <div class="ttl">Monthly Trend
-                    <small>ยอดค่าใช้จ่าย Net · ย้อนหลัง 6 เดือน</small>
+                <div class="ttl">Trend
+                    <small><?= e($range['label']) ?> · <?= e($range['trend']) ?> granularity</small>
                 </div>
                 <div class="d-flex gap-3 align-items-center" style="font-size: 11.5px;">
                     <span style="display: inline-flex; align-items: center; gap: 5px;"><span style="width: 10px; height: 10px; background: linear-gradient(135deg, #5b6cff, #8b5cf6); border-radius: 3px;"></span> Net Amount</span>
@@ -120,6 +138,9 @@ $statusColorsJson = json_encode(array_map(fn($r) => $statusColors[$r['status']] 
             </div>
             <div class="chart-body" style="position: relative; height: 280px;">
                 <canvas id="statusChart"></canvas>
+                <div id="statusEmpty" style="display:none; position:absolute; inset:0; display:none; align-items:center; justify-content:center; color: var(--emm-text-soft); font-size: 13px;">
+                    ไม่มีข้อมูลในช่วงที่เลือก
+                </div>
             </div>
         </div>
     </div>
@@ -131,11 +152,11 @@ $statusColorsJson = json_encode(array_map(fn($r) => $statusColors[$r['status']] 
         <div class="emm-card">
             <div class="emm-card-header">
                 <strong>Top Spending Categories</strong>
-                <span class="text-soft small">ปี <?= date('Y') ?></span>
+                <span class="text-soft small"><?= e($range['label']) ?></span>
             </div>
             <div class="emm-card-body">
                 <?php if (!$topCategories): ?>
-                    <p class="text-center text-muted my-3 mb-0">ยังไม่มีรายการในปีนี้</p>
+                    <p class="text-center text-muted my-3 mb-0">ยังไม่มีรายการในช่วงที่เลือก</p>
                 <?php endif; ?>
                 <?php foreach ($topCategories as $cat): $pct = $catMax > 0 ? round(($cat['amount'] / $catMax) * 100) : 0; ?>
                     <div class="cat-row">
@@ -222,77 +243,92 @@ $statusColorsJson = json_encode(array_map(fn($r) => $statusColors[$r['status']] 
 </div>
 
 <script>
-// Sparkline for hero card 1 (this month)
-(function() {
-    const data = <?= json_encode($trendAmounts) ?>;
-    const max = Math.max(...data, 1);
-    const w = 160, h = 48, pad = 4;
-    const points = data.map((v, i) => {
-        const x = pad + (i * (w - pad*2) / Math.max(data.length - 1, 1));
-        const y = h - pad - ((v / max) * (h - pad*2));
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-    const el = document.getElementById('spark1');
-    if (el) el.setAttribute('points', points.join(' '));
-})();
+// Wait for Chart.js (loaded at end of body) before initializing charts
+document.addEventListener('DOMContentLoaded', function() {
 
-// Trend chart (mixed bar + line)
-(function() {
-    const ctx = document.getElementById('trendChart');
-    if (!ctx || typeof Chart === 'undefined') return;
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: <?= json_encode($trendLabels) ?>,
-            datasets: [{
-                type: 'line',
-                label: 'Net Amount',
-                data: <?= json_encode($trendAmounts) ?>,
-                borderColor: '#5b6cff',
-                backgroundColor: 'rgba(91,108,255,.12)',
-                fill: true, tension: .35,
-                yAxisID: 'y', borderWidth: 2,
-                pointBackgroundColor: '#5b6cff', pointRadius: 4,
-            }, {
-                type: 'bar',
-                label: 'Memo Count',
-                data: <?= json_encode($trendCounts) ?>,
-                backgroundColor: 'rgba(249,115,22,.6)',
-                borderRadius: 6,
-                yAxisID: 'y1',
-                barThickness: 18,
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-            scales: {
-                x: { grid: { display: false }, border: { display: false } },
-                y: { position: 'left', grid: { color: '#eef0f5' }, border: { display: false }, ticks: { callback: v => (v/1000).toFixed(0) + 'k' } },
-                y1: { position: 'right', grid: { display: false }, border: { display: false }, ticks: { precision: 0 } }
-            }
-        }
-    });
-})();
+    // Toggle custom range form
+    var customBtn = document.getElementById('customToggle');
+    var customForm = document.getElementById('customForm');
+    if (customBtn && customForm) {
+        customBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            customForm.style.display = (customForm.style.display === 'none' || customForm.style.display === '') ? 'block' : 'none';
+        });
+    }
 
-// Status donut chart
-(function() {
-    const ctx = document.getElementById('statusChart');
-    if (!ctx || typeof Chart === 'undefined') return;
-    const labels = <?= $statusLabelsJson ?>;
-    const values = <?= $statusValuesJson ?>;
-    const colors = <?= $statusColorsJson ?>;
-    if (!labels.length) return;
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
-        options: {
-            responsive: true, maintainAspectRatio: false, cutout: '68%',
-            plugins: {
-                legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, font: { size: 11.5 }, padding: 10 } },
-                tooltip: { callbacks: { label: c => `${c.label}: ${c.parsed}` } }
+    // ─── Sparkline ───
+    (function() {
+        var data = <?= json_encode($trendAmounts) ?>;
+        var max = Math.max.apply(null, data.concat([1]));
+        var w = 160, h = 48, pad = 4;
+        var points = data.map(function(v, i) {
+            var x = pad + (i * (w - pad*2) / Math.max(data.length - 1, 1));
+            var y = h - pad - ((v / max) * (h - pad*2));
+            return x.toFixed(1) + ',' + y.toFixed(1);
+        });
+        var el = document.getElementById('spark1');
+        if (el) el.setAttribute('points', points.join(' '));
+    })();
+
+    // ─── Trend chart ───
+    (function() {
+        var ctx = document.getElementById('trendChart');
+        if (!ctx || typeof Chart === 'undefined') return;
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: <?= json_encode($trendLabels) ?>,
+                datasets: [{
+                    type: 'line', label: 'Net Amount',
+                    data: <?= json_encode($trendAmounts) ?>,
+                    borderColor: '#5b6cff',
+                    backgroundColor: 'rgba(91,108,255,.12)',
+                    fill: true, tension: .35, yAxisID: 'y', borderWidth: 2,
+                    pointBackgroundColor: '#5b6cff', pointRadius: 4,
+                }, {
+                    type: 'bar', label: 'Memo Count',
+                    data: <?= json_encode($trendCounts) ?>,
+                    backgroundColor: 'rgba(249,115,22,.6)', borderRadius: 6,
+                    yAxisID: 'y1', barThickness: 18,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+                scales: {
+                    x: { grid: { display: false }, border: { display: false } },
+                    y:  { position: 'left',  grid: { color: '#eef0f5' }, border: { display: false }, ticks: { callback: function(v){ return (v/1000).toFixed(0) + 'k'; } } },
+                    y1: { position: 'right', grid: { display: false }, border: { display: false }, ticks: { precision: 0 } }
+                }
             }
+        });
+    })();
+
+    // ─── Status donut ───
+    (function() {
+        var ctx = document.getElementById('statusChart');
+        if (!ctx || typeof Chart === 'undefined') return;
+        var labels = <?= $statusLabelsJson ?>;
+        var values = <?= $statusValuesJson ?>;
+        var colors = <?= $statusColorsJson ?>;
+        if (!labels.length) {
+            ctx.style.display = 'none';
+            var emp = document.getElementById('statusEmpty');
+            if (emp) emp.style.display = 'flex';
+            return;
         }
-    });
-})();
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '68%',
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 10, boxHeight: 10, font: { size: 11.5 }, padding: 10 } },
+                    tooltip: { callbacks: { label: function(c){ return c.label + ': ' + c.parsed; } } }
+                }
+            }
+        });
+    })();
+
+});
 </script>
