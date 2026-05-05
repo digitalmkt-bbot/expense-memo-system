@@ -1,0 +1,55 @@
+# =====================================================================
+# Git ignore — Expense Memo Management System
+# =====================================================================
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Installed marker
+.installed
+
+# Local config overrides (commit only the *.example or production templates)
+config/database.local.php
+config/config.local.php
+
+# User uploads & backups
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/backups/*
+!storage/backups/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.sublime-*
+
+# Build output
+*.zip
+*.tar.gz
+
+# Composer (ถ้าจะใช้ในอนาคต)
+/vendor/
+composer.phar
+
+# Node (สำหรับ build assets — optional)
+/node_modules/
+npm-debug.log
+yarn-error.log
+
+# PHPUnit
+/phpunit.xml
+.phpunit.result.cache
+
+# Cache
+/cache/
+.cache/

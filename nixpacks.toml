@@ -1,0 +1,23 @@
+# Fallback Nixpacks builder (Railway uses this if Dockerfile is missing)
+# Dockerfile takes precedence — nixpacks กำหนดเป็น fallback
+
+[phases.setup]
+nixPkgs = ['php82', 'php82Extensions.pdo', 'php82Extensions.pdo_mysql', 'php82Extensions.mbstring', 'php82Extensions.fileinfo', 'mysql80']
+
+[phases.install]
+cmds = [
+    'mkdir -p storage/uploads storage/backups',
+    'chmod -R 755 .',
+    'chmod -R 775 storage',
+    'cp deploy/index.flat.php index.php',
+    'cp deploy/htaccess.root .htaccess'
+]
+
+[phases.build]
+cmds = [
+    'php -l index.php',
+    'echo "✅ Build complete"'
+]
+
+[start]
+cmd = 'php deploy/auto-install.php && php -S 0.0.0.0:${PORT:-8080} -t .'

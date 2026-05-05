@@ -1,0 +1,3 @@
+# Place this file as `.htaccess` inside any folder you want fully blocked from web
+# (app/, config/, database/, storage/, deploy/)
+Require all denied

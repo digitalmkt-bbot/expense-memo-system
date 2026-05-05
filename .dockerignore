@@ -1,0 +1,23 @@
+# Don't copy these into the Docker image
+.git
+.github
+.gitignore
+.gitattributes
+.idea
+.vscode
+.DS_Store
+*.zip
+*.tar.gz
+
+# Local-only
+.env
+.env.local
+.installed
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/backups/*
+!storage/backups/.gitkeep
+
+# Documentation (optional — keep slim image)
+*.md
+!README.md

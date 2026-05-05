@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: PHP Lint + Smoke
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: pdo_mysql, mbstring, fileinfo
+          coverage: none
+
+      - name: Lint all PHP files
+        run: |
+          set -e
+          find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" \
+            -exec php -l {} \; \
+            | grep -v "No syntax errors" || true
+          # fail if any errors
+          if find . -name "*.php" -not -path "./vendor/*" -not -path "./node_modules/*" \
+              -exec php -l {} \; 2>&1 | grep -q "Parse error"; then
+            echo "❌ Syntax errors found"
+            exit 1
+          fi
+          echo "✅ All PHP files pass syntax check"
+
+      - name: Verify autoloader paths
+        run: |
+          for f in app/controllers/*.php app/models/*.php; do
+            name=$(basename "$f" .php)
+            cls=$(grep -oP 'class\s+\K\w+' "$f" | head -1)
+            if [ "$name" != "$cls" ]; then
+              echo "❌ MISMATCH: $f -> class $cls"
+              exit 1
+            fi
+          done
+          echo "✅ All class names match filenames"
+
+      - name: Validate SQL schema
+        run: |
+          if grep -q "CREATE TABLE" database/01_schema.sql; then
+            echo "✅ Schema file looks valid"
+          else
+            echo "❌ Schema file invalid"
+            exit 1
+          fi
+
+  docker-build:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t expense-memo:test .
+      - name: Verify Docker image
+        run: docker run --rm expense-memo:test php -v

@@ -1,0 +1,68 @@
+# =====================================================
+# .htaccess for cPanel/DirectAdmin shared hosting
+# วางไฟล์นี้ที่ root เป็นชื่อ ".htaccess" หาก deploy แบบ flat layout
+# =====================================================
+
+# Force HTTPS (uncomment หลังติดตั้ง SSL)
+# RewriteEngine On
+# RewriteCond %{HTTPS} !=on
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ----- ปิดการเรียกตรงไปยัง folder ที่มี source code -----
+RewriteEngine On
+RewriteRule ^app(/|$)       - [F,L]
+RewriteRule ^config(/|$)    - [F,L]
+RewriteRule ^database(/|$)  - [F,L]
+RewriteRule ^deploy(/|$)    - [F,L]
+RewriteRule ^vendor(/|$)    - [F,L]
+
+# ----- ห้ามเรียกไฟล์เด็ดขาด -----
+<FilesMatch "\.(env|sql|md|json|lock|gitignore|gitkeep|ini|log|sh|yml|yaml|xml)$">
+    Require all denied
+</FilesMatch>
+
+# ----- บังคับเฉพาะ public PHP ที่อนุญาต (แต่ rewrite ทุกอย่าง) -----
+<IfModule mod_rewrite.c>
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# ----- Disable directory listing -----
+Options -Indexes
+
+# ----- Security Headers -----
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "same-origin"
+    Header set Permissions-Policy "geolocation=(), camera=(), microphone=()"
+    # Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains" env=HTTPS
+</IfModule>
+
+# ----- Disable access to PHP source via dotfile pattern -----
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# ----- Allow specific entry points -----
+<Files "index.php">
+    Require all granted
+</Files>
+<Files "setup.php">
+    Require all granted
+</Files>
+
+# ----- Compression -----
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json
+</IfModule>
+
+# ----- Browser caching for static assets -----
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png  "access plus 1 month"
+    ExpiresByType text/css   "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
